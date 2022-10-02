@@ -153,7 +153,7 @@ while run:
 		if keys[pygame.K_d]:
 			angle -= angle_vel * -1 if keys[pygame.K_DOWN] else 1
 	elif current_transport == "walk": # on foot
-		vel = 1 + speed_boost
+		vel = 6 + speed_boost
 
 		check_top_coords = (350, 350 - 20)
 		check_bottom_coords = (350, 350 + 20)

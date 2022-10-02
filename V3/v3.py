@@ -6,7 +6,7 @@ pygame.init()
 
 ID_img = pygame.image.load("id.jpg")
 ID_img = pygame.transform.scale(ID_img, (50, 28))
-idCoords = [(150, 50), (100, 100)]
+idCoords = [(168, 400), (488, 648)]
 idStatus = []
 for i in range(len(idCoords)):
 	idStatus += [True] if random.randint(0, 1) > 0.5 else [False]
@@ -88,6 +88,7 @@ class Player:
         stay = True
         menuBack = pygame.image.load("aggie.png")
         menuBack = pygame.transform.scale(menuBack, (700, 700))
+        spacePressed = 0
 
         while stay:
             display.blit(menuBack, (0, 0))
@@ -101,8 +102,50 @@ class Player:
 
             if keys[pygame.K_SPACE]:
                 stay = False
+                spacePressed = 1
+        
+        stay = True
+        instBack = pygame.image.load("instructions3.png")
+        instBack = pygame.transform.scale(instBack, (700, 700))
+
+        while stay:
+            display.blit(instBack, (0, 0))
+            pygame.display.flip()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+            
+            keys = pygame.key.get_pressed()
+
+            if (not keys[pygame.K_SPACE]) and spacePressed == 1:
+                spacePressed = 2
+            if keys[pygame.K_SPACE] and spacePressed == 2:
+                stay = False
 
         return
+    
+    def pause():
+        escPressed = 0
+        stay = True
+        pauseBack = pygame.image.load("pause.png")
+        pauseBack = pygame.transform.scale(pauseBack, (700, 700))
+
+        while stay:
+            display.blit(pauseBack, (0, 0))
+            pygame.display.flip()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+
+            keys = pygame.key.get_pressed()
+
+            if (not keys[pygame.K_ESCAPE]) and escPressed == 0:
+                escPressed = 1
+            if keys[pygame.K_ESCAPE] and escPressed == 1:
+                stay = False
+
 
 class Vehicle:
     def __init__(self, url, x, y, vel, rotatable):
@@ -214,7 +257,7 @@ def game(display, clock):
                 if event.key == pygame.K_e:
                     keypress = True
                 if event.key == pygame.K_ESCAPE:
-                    player.menu()
+                    Player.pause()
 
         # camera_pos is generated from player class
         camera_pos = player.move(camera_pos, world)
@@ -251,7 +294,6 @@ def game(display, clock):
                     idStatus[i] = False
                     global idCount
                     idCount += 1 
-                    print(idCount)
 
         # map
         display.blit(world,camera_pos)
