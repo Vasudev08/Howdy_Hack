@@ -117,7 +117,6 @@ def rotate_img(image, pos, originPos, angle):
 
 def game(display, clock):
     world = pygame.Surface((1200, 1200))
-
     map = pygame.image.load("map.png")
 
     # init
