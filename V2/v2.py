@@ -3,6 +3,16 @@ from math import sin, cos, radians
 import pygame
 pygame.init()
 
+
+ID_img = pygame.image.load("id.jpg")
+ID_img = pygame.transform.scale(ID_img, (50, 28))
+idCoords = [(0, 0), (100, 100)]
+idStatus = []
+for i in range(len(idCoords)):
+	idStatus += [True]
+idCount = 0
+
+
 class Player:
     def __init__(self):
         self.image = pygame.image.load("student.png")
@@ -47,6 +57,26 @@ class Player:
     def render(self, display): # display itself
         if not self.in_vehicle:
             display.blit(self.image, (self.rect.x - 20,self.rect.y - 20))
+    
+    def menu():
+        stay = True
+        menuBack = pygame.image.load("menu_back.jpg")
+        menuBack = pygame.transform.scale(menuBack, (700, 700))
+
+        while stay:
+            display.blit(menuBack, (0, 0))
+            pygame.display.flip()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+
+            keys = pygame.key.get_pressed()
+
+            if keys[pygame.K_SPACE]:
+                stay = False
+
+        return
 
 class Vehicle:
     def __init__(self, url, x, y, vel, rotatable):
@@ -126,6 +156,8 @@ def game(display, clock):
     car = Vehicle("car.png", 200, 50, 10, True)
     scooter = Vehicle("scooter.png", 30, 45, 10, False)
     vehicles = [car, scooter] # array of all vehicles
+
+    Player.menu()
     
     while True:
         clock.tick(60)
@@ -167,8 +199,25 @@ def game(display, clock):
                 player.pos_update(camera_update)
             vehicle.render(world)
 
+        # powerups
+        for i in range(len(idStatus)):
+            pos = player.get_pos()
+            if (idStatus[i] == True):
+                world.blit(ID_img, idCoords[i])
+            if ((pos[0] - (idCoords[i][0] + 25)) ** 2 + (pos[1] - (idCoords[i][1] + 14)) ** 2) < 1200:
+                idStatus[i] = False
+                global idCount
+                idCount += 1 
+
         # map
         display.blit(world,camera_pos)
+
+        # debugging coordinates
+        font = pygame.font.SysFont(None, 75)
+        text = font.render(str(camera_pos[0]), True, "blue")
+        display.blit(text, (100, 25))
+        text = font.render(str(camera_pos[1]), True, "blue")
+        display.blit(text, (300, 25))
 
         pygame.display.flip()
 
