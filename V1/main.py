@@ -16,6 +16,15 @@ car_img = pygame.transform.scale(car_img, (60, 60))
 student_img = pygame.image.load("student.png")
 student_img = pygame.transform.scale(student_img, (40, 40))
 
+
+ID_img = pygame.image.load("id.jpg")
+ID_img = pygame.transform.scale(ID_img, (50, 28))
+idCoords = [(98.94, 215.78), (100, 300)]
+idStatus = []
+for i in range(len(idCoords)):
+	idStatus += [True]
+idCount = 0
+
 current_transport = "car"
 
 x = 200
@@ -154,6 +163,19 @@ while run:
 		rotated_info = rotate_img(car_img, (x + car_x, y + car_y), car_img.get_rect().size, angle)
 		win.blit(rotated_info[0], rotated_info[1])
 
+	# powerups
+	for i in range(len(idStatus)):
+		if (idStatus[i] == True):
+			win.blit(ID_img, (idCoords[i][0] + x, idCoords[i][1] + y))
+			if (((-x + 340) - (idCoords[i][0] + 25)) ** 2 + ((-y + 340) - idCoords[i][1] + 14) ** 2) < 1500:
+				idStatus[i] = False
+				idCount += 1
+
+
+	#x - 3140
+	#y - 2450
+	
+
 	# direction line
 	goal = (2500, 3000)
 	goal_screen_x = goal[0] + x - 3140
@@ -168,6 +190,17 @@ while run:
 	font = pygame.font.SysFont(None, 75)
 	text = font.render(str(counter), True, "blue")
 	win.blit(text, (615, 25))
+
+	# debugging coordinates
+	text = font.render(str(round(-x + 340,  2)), True, "blue")
+	win.blit(text, (100, 25))
+	text = font.render(str(round(-y + 340 , 2)), True, "blue")
+	win.blit(text, (300, 25))
+
+	# ID counter
+	text = font.render(str(idCount), True, "blue")
+	win.blit(text, (100, 225))
+
 	pygame.display.flip()
 
 pygame.quit()
