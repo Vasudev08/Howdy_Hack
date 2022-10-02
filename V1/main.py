@@ -1,4 +1,4 @@
-from math import sin, cos, radians
+from math import sin, cos, radians, pi
 import pygame
 
 screen = (700, 700)
@@ -19,7 +19,7 @@ student_img = pygame.transform.scale(student_img, (40, 40))
 
 ID_img = pygame.image.load("id.jpg")
 ID_img = pygame.transform.scale(ID_img, (50, 28))
-idCoords = [(98.94, 215.78), (100, 300)]
+idCoords = [(-117, 198), (-61, -58)]
 idStatus = []
 for i in range(len(idCoords)):
 	idStatus += [True]
@@ -36,7 +36,7 @@ car_y = 0
 
 width = 20
 height = 20
-angle_vel = 1
+angle_vel = 5
 
 run = True
 
@@ -71,8 +71,42 @@ def within_collision_hex(check_hex):
 			count = 0
 	return False
 
+def menu():
+	global run
+	leave1 = False
+	leave2 = False
+	menuBack = pygame.image.load("menu_back.jpg")
+	menuBack = pygame.transform.scale(menuBack, (700, 700))
+
+	while not leave1:
+		win.blit(menuBack, (0, 0))
+		pygame.display.flip()
+
+		keys = pygame.key.get_pressed()
+
+		if keys[pygame.K_a]:
+			print("1")
+			leave1 = True
+			break
+
+	while not leave2:
+		win.blit(menuBack, (0, 0))
+		pygame.display.flip()
+
+		keys = pygame.key.get_pressed()
+
+		if keys[pygame.K_KP_ENTER]:
+			leave2 = True
+			break
+
+	return
+
+
+menu()
+
 # infinite loop
 while run:
+	pygame.display.flip()
 	# delay between frames
 	pygame.time.delay(10)
 	
@@ -109,7 +143,7 @@ while run:
 
 	# drive forward or backwards
 	if current_transport == "car": # car movement
-		vel = 4
+		vel = 6
 
 		# car front/back collision
 		check_front_coords = (int(350 + 35 * sin(radians(angle))), int(350 + 35 * cos(radians(angle))))
@@ -125,11 +159,11 @@ while run:
 			forward_backward_movement = True
 
 		if keys[pygame.K_LEFT]:
-			angle += angle_vel * -1 if keys[pygame.K_DOWN] else 1
+			angle += angle_vel * (-1 if keys[pygame.K_DOWN] else 1)
 		if keys[pygame.K_RIGHT]:
-			angle -= angle_vel * -1 if keys[pygame.K_DOWN] else 1
+			angle -= angle_vel * (-1 if keys[pygame.K_DOWN] else 1)
 	elif current_transport == "walk": # on foot
-		vel = 1 + speed_boost
+		vel = 1 + speed_boost ####FIXXXXXX
 
 		check_top_coords = (350, 350 - 20)
 		check_bottom_coords = (350, 350 + 20)
@@ -167,7 +201,7 @@ while run:
 	for i in range(len(idStatus)):
 		if (idStatus[i] == True):
 			win.blit(ID_img, (idCoords[i][0] + x, idCoords[i][1] + y))
-			if (((-x + 340) - (idCoords[i][0] + 25)) ** 2 + ((-y + 340) - idCoords[i][1] + 14) ** 2) < 1500:
+			if (((-x + 340) - (idCoords[i][0] + 25)) ** 2 + ((-y + 340) - idCoords[i][1] + 14) ** 2) < 1200:
 				idStatus[i] = False
 				idCount += 1
 
@@ -192,9 +226,9 @@ while run:
 	win.blit(text, (615, 25))
 
 	# debugging coordinates
-	text = font.render(str(round(-x + 340,  2)), True, "blue")
+	text = font.render(str(round(-x + 315,  2)), True, "blue")
 	win.blit(text, (100, 25))
-	text = font.render(str(round(-y + 340 , 2)), True, "blue")
+	text = font.render(str(round(-y + 354 , 2)), True, "blue")
 	win.blit(text, (300, 25))
 
 	# ID counter
