@@ -7,7 +7,7 @@ pygame.init()
 # Student ID system
 ID_img = pygame.image.load("id.jpg")
 ID_img = pygame.transform.scale(ID_img, (50, 28))
-idCoords = [(150, 50), (100, 100)]
+idCoords = [(1772, 3030), (1876, 3566), (1832, 1780), (2920, 740), (2792, 2964), (1784, 4700), (1544, 3868), (1280, 2196), (2804, 2086), (3452, 3054), (3268, 3734)]
 idStatus = []
 for i in range(len(idCoords)):
 	idStatus += [True] if random.randint(0, 1) > 0.5 else [False]
@@ -15,7 +15,7 @@ idCount = 0
 
 # timer/countdown
 clock = pygame.time.Clock()
-counter = 30 # number of seconds
+counter = 5 # number of seconds
 timer_event = pygame.USEREVENT+1
 pygame.time.set_timer(timer_event, 1000)
 
@@ -159,6 +159,24 @@ class Player:
             if keys[pygame.K_ESCAPE] and escPressed == 1:
                 stay = False
 
+    def results():
+        stay = True
+        pauseBack = pygame.image.load("results.png")
+        pauseBack = pygame.transform.scale(pauseBack, (700, 700))
+
+        while stay:
+            display.blit(pauseBack, (0, 0))
+            pygame.display.flip()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+
+            keys = pygame.key.get_pressed()
+
+            if keys[pygame.K_ESCAPE]:
+                stay = False
+
 class Vehicle:
     def __init__(self, url, x, y, vel, rotatable):
         self.image = pygame.image.load(url)
@@ -292,7 +310,8 @@ def game(display, clock):
                 global counter
                 counter -= 1
                 if counter == 0:
-                    pygame.time.set_timer(timer_event, 0)  
+                    pygame.time.set_timer(timer_event, 0)
+                    Player.results()
 
         # camera_pos is generated from player class
         camera_pos = player.move(camera_pos, world)
@@ -346,10 +365,10 @@ def game(display, clock):
 
         # debugging coordinates
         font = pygame.font.SysFont(None, 40)
-        #text = font.render(str(350 - camera_pos[0]), True, "white")
-        #display.blit(text, (100, 25))
-        #text = font.render(str(350 - camera_pos[1]), True, "white")
-        #display.blit(text, (300, 25))
+        text = font.render(str(350 - camera_pos[0]), True, "white")
+        display.blit(text, (100, 225))
+        text = font.render(str(350 - camera_pos[1]), True, "white")
+        display.blit(text, (300, 225))
 
         # destination
         text = font.render(f"Next Class in: {dest_name}", True, "white")
