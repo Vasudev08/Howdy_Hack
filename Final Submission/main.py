@@ -1,69 +1,263 @@
 from math import sin, cos, radians
+import random
 import pygame
 
-screen = (700, 700)
-
 pygame.init()
-win = pygame.display.set_mode(screen)
-pygame.display.set_caption("HowdyHack 2022")
 
-map_img = pygame.image.load("map.png")
-map_img = pygame.transform.scale(map_img, (6285, 4896))
+# Student ID system
+ID_img = pygame.image.load("id.jpg")
+ID_img = pygame.transform.scale(ID_img, (50, 28))
+idCoords = [(1772, 3030), (1876, 3566), (1832, 1780), (2920, 740), (2792, 2964), (1784, 4700), (1544, 3868), (1280, 2196), (2804, 2086), (3452, 3054), (3268, 3734), (2200, 2530), (2500, 2000), (4000, 2630), (1670, 3150), (2700, 3500), (2000, 4700), (2374, 1200)]
 
-car_img = pygame.image.load("car.png")
-car_img = pygame.transform.scale(car_img, (50, 50))
+class Player:
+    def __init__(self, x, y):
+        self.image = pygame.image.load("student.png")
+        self.image = pygame.transform.scale(self.image, (40, 40))
 
-student_img = pygame.image.load("student.png")
-student_img = pygame.transform.scale(student_img, (40, 40))
+        self.rect = pygame.Rect((40, 40), (16,16)) # holds player x,y for collision purposes
+        self.vel = 4
 
-current_transport = "walk"
+        self.rect.x = x
+        self.rect.y = y
 
-x = 200
-y = 200
-angle = 0
+        self.in_vehicle = False
 
-car_x = -50
-car_y = -70
+    def get_pos(self):
+        return (self.rect.x, self.rect.y)
 
-width = 20
-height = 20
-angle_vel = 1
+    def pos_update(self, pos_update):
+        self.rect.x = pos_update[0]
+        self.rect.y = pos_update[1]
 
-run = True
+    def update_in_vehicle(self, value):
+        self.in_vehicle = value
 
-# timer/countdoewn
-clock = pygame.time.Clock()
-counter = 30 # number of seconds
-timer_event = pygame.USEREVENT+1
-pygame.time.set_timer(timer_event, 1000)
+    def collision(self, world, points):
+        # collison override: TODO - remove, for testing only
 
+        # points = [(self.rect.x, self.rect.y), (self.rect.x + self.rect.width, self.rect.y), (self.rect.x, self.rect.y + self.rect.height), (self.rect.x + self.rect.width, self.rect.y + self.rect.height)]
+        #collision_refs = [(190, 175, 160), (175, 165, 155), (155, 140, 130), (160, 155, 150), (175, 165, 160), ()]
+        collision_refs = [(150, 150, 150)]
 
-"""
-# unimplemented vehicle class
+        for i in range(len(points)):
+            # edge detection - TODO: update before submission
+            if points[i][0] <= self.rect.width + 5 or points[i][1] <= self.rect.height + 5 or points[i][0] >= 4800 or points[i][1] > 6000:
+                return True
+
+            # get pixel colors
+            test_hex = world.get_at(points[i][:3])[:3]
+            
+            count = 0
+            for c in range(len(collision_refs)):
+                for i in range(len(test_hex)):
+                    section = collision_refs[c]
+                    comparison = section[i]
+                    if abs(test_hex[i] - comparison) < 30:
+                        count += 1
+                if count == 3:
+                    return True
+                else:
+                    count = 0
+        return False
+
+    def move(self,camera_pos,world):
+        pos_x,pos_y = camera_pos # pos_x and pos_y represent the camera
+
+        # input
+        if not self.in_vehicle:
+            key = pygame.key.get_pressed()
+            if key[pygame.K_w] and not self.collision(world, [(self.rect.x, self.rect.y - self.rect.height)]):
+                self.rect.y -= self.vel
+                pos_y += self.vel
+            if key[pygame.K_a] and not self.collision(world, [(self.rect.x - self.rect.width, self.rect.y)]):
+                self.rect.x -= self.vel
+                pos_x += self.vel
+            if key[pygame.K_s] and not self.collision(world, [(self.rect.x, self.rect.y + self.rect.height)]):
+                self.rect.y += self.vel
+                pos_y -= self.vel
+            if key[pygame.K_d] and not self.collision(world, [(self.rect.x + self.rect.width, self.rect.y)]):
+                self.rect.x += self.vel
+                pos_x -= self.vel
+        
+        return (pos_x,pos_y)
+
+    def render(self, display): # display itself
+        if not self.in_vehicle:
+            display.blit(self.image, (self.rect.x - 20,self.rect.y - 20))
+
+    def menu():
+        stay = True
+        menuBack = pygame.image.load("aggie.png")
+        menuBack = pygame.transform.scale(menuBack, (700, 700))
+        spacePressed = 0
+
+        while stay:
+            display.blit(menuBack, (0, 0))
+            pygame.display.flip()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+
+            keys = pygame.key.get_pressed()
+
+            if keys[pygame.K_SPACE]:
+                stay = False
+                spacePressed = 1
+        
+        stay = True
+        instBack = pygame.image.load("instructions3.png")
+        instBack = pygame.transform.scale(instBack, (700, 700))
+
+        while stay:
+            display.blit(instBack, (0, 0))
+            pygame.display.flip()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+            
+            keys = pygame.key.get_pressed()
+
+            if (not keys[pygame.K_SPACE]) and spacePressed == 1:
+                spacePressed = 2
+            if keys[pygame.K_SPACE] and spacePressed == 2:
+                stay = False
+
+        return
+    
+    def pause():
+        escPressed = 0
+        stay = True
+        pauseBack = pygame.image.load("pause.png")
+        pauseBack = pygame.transform.scale(pauseBack, (700, 700))
+
+        while stay:
+            display.blit(pauseBack, (0, 0))
+            pygame.display.flip()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+
+            keys = pygame.key.get_pressed()
+
+            if (not keys[pygame.K_ESCAPE]) and escPressed == 0:
+                escPressed = 1
+            if keys[pygame.K_ESCAPE] and escPressed == 1:
+                stay = False
+
+    def results(display, clock, score, ids_collected, classes_attended):
+        stay = True
+        pauseBack = pygame.image.load("results.png")
+        pauseBack = pygame.transform.scale(pauseBack, (700, 700))
+
+        while stay:
+            display.blit(pauseBack, (0, 0))
+
+            font = pygame.font.SysFont(None, 80)
+            #text = font.render(str(350 - camera_pos[0]), True, "white")
+            #display.blit(text, (100, 50))
+            #text = font.render(str(350 - camera_pos[1]), True, "white")
+            #display.blit(text, (300, 50))
+
+            # destination
+            text = font.render(f"Score: {score}", True, "white")
+            display.blit(text, (350 - text.get_width()/2, 240))
+
+            font = pygame.font.SysFont(None, 40)
+            text = font.render(f"IDs Collected: {ids_collected}", True, "white")
+            display.blit(text, (350 - text.get_width()/2, 330))
+
+            text = font.render(f"Classes Attended: {classes_attended}", True, "white")
+            display.blit(text, (350 - text.get_width()/2, 370))
+            pygame.display.flip()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+
+            keys = pygame.key.get_pressed()
+
+            if keys[pygame.K_ESCAPE]:
+                stay = False
+                game(display, clock)
+
 class Vehicle:
-	def __init__(self, pos_x, pos_y, angle, url, w, h, collision_type, drive_type, check_points):
-		self.name = pos_x
-		self.age = pos_y
-		self.image = pygame.image.load(url)
-		self.image = pygame.transform.scale(self.image, (w, h))
-		self.collision_type = collision_type
-		self.drive_type = drive_type
-		self.check_points = check_points
+    def __init__(self, url, x, y, vel, rotatable):
+        self.image = pygame.image.load(url)
+        self.image = pygame.transform.scale(self.image, (30, 30))
 
-	def collision_check(self):
-		if self.collision_type == "road-only":
-			for i in range(len(self.check_points)):
-				if not road_collision(self.check_points[i]):
-					return True
-		elif self.collision_type == "no-buildings":
-			for i in range(len(self.check_points)):
-				if not within_collision_hex(self.check_points[i]):
-					return True
-		return False
-"""
+        self.rect = pygame.Rect((30,30), (10, 10)) # hitbox
+        self.rotatable = rotatable
+
+        self.rect.x = x
+        self.rect.y = y
+
+        self.col_scale = self.rect.height * 2 - 2
+
+        self.player_in_vehicle = False
+
+        self.vel = vel
+        self.angle = 0
+        self.angle_vel = 5
+
+    def collision(self, world, points): # road-only collision (uses 4 coordinates - need to update to check rotational front/back)
+        # points = [(self.rect.x, self.rect.y), (self.rect.x + self.rect.width, self.rect.y), (self.rect.x, self.rect.y + self.rect.height), (self.rect.x + self.rect.width, self.rect.y + self.rect.height)]
+        
+        for i in range(len(points)):
+            #pygame.draw.line(world, (89, 0, 35), points[i], (0, 0), width=5)
+            #print(points[i])
 
 
-# clean image rotation
+            test_hex = world.get_at(points[i][:3])
+            count = 0
+            for i in range(len(test_hex)):
+                if abs(test_hex[i] - 82) < 30:
+                    count += 1
+            if count == 3:
+                return True
+        return False
+
+    def move(self, world):
+        change_x, change_y = 0, 0
+
+        if self.player_in_vehicle:
+            key = pygame.key.get_pressed()
+
+            if key[pygame.K_w] and self.collision(world, [(int(self.rect.x + self.col_scale * sin(radians(self.angle))), int(self.rect.y + self.col_scale * cos(radians(self.angle))))]):
+                change_x = self.vel * sin(radians(self.angle))
+                change_y = self.vel * cos(radians(self.angle))
+                self.rect.x += change_x
+                self.rect.y += change_y
+            elif key[pygame.K_s] and self.collision(world, [(int(self.rect.x - self.col_scale * sin(radians(self.angle))), int(self.rect.y - self.col_scale * cos(radians(self.angle))))]):
+                change_x = -1 * self.vel * sin(radians(self.angle))
+                change_y = -1 * self.vel * cos(radians(self.angle))
+                self.rect.x += change_x
+                self.rect.y += change_y
+            if key[pygame.K_a]:
+                self.angle += self.angle_vel * (-1 if key[pygame.K_DOWN] else 1)
+            if key[pygame.K_d]:
+                self.angle -= self.angle_vel * (-1 if key[pygame.K_DOWN] else 1)
+
+            return (self.rect.x, self.rect.y)
+        return False
+
+    def interact(self, player_pos, keypress):
+        if keypress:
+            # determine distance from player
+            distance = ( (self.rect.x - player_pos[0]) ** 2 + (self.rect.y - player_pos[1]) ** 2 ) ** (1/2)
+            if distance < 50 and not self.player_in_vehicle:
+                self.player_in_vehicle = True
+            elif self.player_in_vehicle:
+                self.player_in_vehicle = False
+        return self.player_in_vehicle
+
+    def render(self, display):
+        #display.blit(self.image, (self.rect.x,self.rect.y))
+        rotated_info = rotate_img(self.image, (self.rect.x, self.rect.y), self.image.get_rect().size, self.angle if self.rotatable else 0)
+        display.blit(rotated_info[0], rotated_info[1])
+
 def rotate_img(image, pos, originPos, angle):
     originPos = (originPos[0]/2, originPos[1]/2)
     image_rect = image.get_rect(topleft = (pos[0] - originPos[0], pos[1]-originPos[1]))
@@ -74,133 +268,150 @@ def rotate_img(image, pos, originPos, angle):
     rotated_image_rect = rotated_image.get_rect(center = rotated_image_center)
     return (rotated_image, rotated_image_rect)
 
-def within_collision_hex(check_hex):
-	collision_refs = [(190, 175, 160), (175, 165, 155), (155, 140, 130)]
-	count = 0
-	for c in range(len(collision_refs)):
-		for i in range(len(check_hex)):
-			if abs(check_hex[i] - collision_refs[c][i]) < 10:
-				count += 1
-		if count == 3:
-			return True
-		else:
-			count = 0
-	return False
+def game(display, clock):
+    idStatus = []
+    for i in range(len(idCoords)):
+        idStatus += [True] if random.randint(0, 1) > 0.3 else [False]
+    idCount = 0
 
-def road_collision(check_hex):
-	count = 0
-	for i in range(len(check_hex)):
-		if abs(check_hex[i] - 82) < 10:
-			count += 1
-	return count == 3
+    # timer/countdown
+    clock = pygame.time.Clock()
+    timer_event = pygame.USEREVENT+1
+    pygame.time.set_timer(timer_event, 1000)
+    counter = 60 # number of seconds per game
 
+    calc_size = (6285, 4896)
+    world = pygame.Surface(calc_size)
 
-# infinite loop
-while run:
-	# delay between frames
-	pygame.time.delay(10)
-	
-	# input handling
-	for event in pygame.event.get():
-		if event.type == pygame.QUIT:			
-			run = False
+    # class positions
+    destinations = {"Kyle Field" : (2570, 3220), "Zach" : (2750, 630), "Water Tower??": (2170, 1500), "ILCB": (1970, 2930), "Held": (3170, 2200), "Petr": (3140, 1900), "Blocker": (2380, 1130), "MSC": (2500, 3000), "Commons": (3650, 2000), "Baseball field": (2500, 4500), "Lot 100": (1170, 4300)}
 
-		if event.type == pygame.KEYDOWN: # single click action
-			# interactions
-			if event.key == pygame.K_SPACE:
-				if current_transport == "car": # get out of car
-					current_transport = "walk"
-					car_x = 350 - x
-					car_y = 350 - y
-				elif current_transport == "walk": # get into car
-					car_screen_pos_x = x + car_x
-					car_screen_pos_y = y + car_y
-					if ((350 - (car_screen_pos_x)) ** 2 + (350 - (car_screen_pos_y)) ** 2) ** (1/2) < 60:
-						current_transport = "car"
+    map = pygame.image.load("compressed.png")
+    map = pygame.transform.scale(map, calc_size)
 
-		if event.type == timer_event:
-			counter -= 1
-			text = font.render(str(counter), True, "blue")
-			if counter == 0:
-				pygame.time.set_timer(timer_event, 0)  
+    # init
+    player = Player(1580, 2830) # player start coords provided in play init
 
-	keys = pygame.key.get_pressed()
-	
-	# speed boost (shift)
-	speed_boost = 0
-	if keys[pygame.K_SPACE]:
-		speed_boost = 5
+    player_init_pos = player.get_pos()
+    camera_pos = (350 - player_init_pos[0], 350 - player_init_pos[1])
 
-	# drive forward or backwards
-	if current_transport == "car": # car movement
-		vel = 4
+    Player.menu() # menu
 
-		# car front/back collision
-		check_front_coords = (int(350 + 35 * sin(radians(angle))), int(350 + 35 * cos(radians(angle))))
-		check_back_coords = (int(350 - 35 * sin(radians(angle))), int(350 - 35 * cos(radians(angle))))
+    car = Vehicle("car.png", 1580, 2830, 10, True)
+    car2 = Vehicle("car.png", 2473, 2574, 10, True)
 
-		if keys[pygame.K_w] and road_collision(win.get_at(check_front_coords)[:3]):
-			x -= vel * sin(radians(angle))
-			y -= vel * cos(radians(angle))
-			forward_backward_movement = True
-		if keys[pygame.K_s] and road_collision(win.get_at(check_back_coords)[:3]): # backwards is slower than forwards
-			x += vel * sin(radians(angle)) * (2/3)
-			y += vel * cos(radians(angle)) * (2/3)
-			forward_backward_movement = True
+    scooter = Vehicle("scooter.png", 1500, 2718, 5, False)
+    scooter2 = Vehicle("scooter.png", 1700, 3000, 5, False)
+    scooter3 = Vehicle("scooter.png", 2073, 1822, 5, False)
+    vehicles = [car, car2, scooter, scooter2, scooter3] # array of all vehicles
+    
+    # random destination
+    dest_name, dest_pos = random.choice(list(destinations.items()))
 
-		if keys[pygame.K_a]:
-			angle += angle_vel * -1 if keys[pygame.K_DOWN] else 1
-		if keys[pygame.K_d]:
-			angle -= angle_vel * -1 if keys[pygame.K_DOWN] else 1
-	elif current_transport == "walk": # on foot
-		vel = 1 + speed_boost
+    # score init/reset
+    score = 0
+    ids_collected = 0
+    classes_attended = 0
 
-		check_top_coords = (350, 350 - 20)
-		check_bottom_coords = (350, 350 + 20)
-		check_left_coords = (350 + 15, 350)
-		check_right_coords = (350 - 15, 350)
+    while True:
+        clock.tick(60)
+        # print(clock.get_fps())
 
-		if keys[pygame.K_w] and not(within_collision_hex(win.get_at(check_top_coords)[:3])):
-			y += vel
-		if keys[pygame.K_s] and not(within_collision_hex(win.get_at(check_bottom_coords)[:3])):
-			y -= vel
-		if keys[pygame.K_a] and not(within_collision_hex(win.get_at(check_left_coords)[:3])):
-			x += vel
-		if keys[pygame.K_d] and not(within_collision_hex(win.get_at(check_right_coords)[:3])):
-			x -= vel
+        keypress = False
 
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
 
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_e:
+                    keypress = True
+                if event.key == pygame.K_ESCAPE:
+                    Player.pause() # pause
 
-	# background and moving map
-	win.fill((255, 255, 255))
-	rotated_info = rotate_img(map_img, (x, y), map_img.get_rect().size, 0)
-	win.blit(rotated_info[0], rotated_info[1])
+            if event.type == timer_event:
+                counter -= 1
+                if counter == 0:
+                    pygame.time.set_timer(timer_event, 0)
 
-	# character
-	if current_transport == "car":
-		rotated_info = rotate_img(car_img, (350, 350), car_img.get_rect().size, angle)
-		win.blit(rotated_info[0], rotated_info[1])
+                    # end game / points scored screen
+                    Player.results(display, clock, score, ids_collected, classes_attended)
 
+        # camera_pos is generated from player class
+        camera_pos = player.move(camera_pos, world)
+        in_any_vehicle = False
+        for vehicle in vehicles:
+            if vehicle.interact(player.get_pos(), keypress):
+                in_any_vehicle = True
+        player.update_in_vehicle(in_any_vehicle)
 
-	elif current_transport == "walk":
-		win.blit(student_img, (330, 330))
-		rotated_info = rotate_img(car_img, (x + car_x, y + car_y), car_img.get_rect().size, angle)
-		win.blit(rotated_info[0], rotated_info[1])
+        # clear
+        display.fill((89, 0, 35))
 
-	# direction line
-	goal = (2500, 3000)
-	goal_screen_x = goal[0] + x - 3140
-	goal_screen_y = goal[1] + y - 2450
-	pygame.draw.line(win, "blue", (350, 350), (goal_screen_x, goal_screen_y), width=5)
+        # map
+        rotated_info = rotate_img(map, (0, 0), map.get_rect(), 0)
+        world.blit(rotated_info[0], rotated_info[1])
 
-	# win condition (if close enough to destination)
-	if(((350 - (goal_screen_x)) ** 2 + (350 - (goal_screen_y)) ** 2) ** (1/2)) < 100:
-		print("WIN!")
+        # display player
+        player.render(world)
 
-	# countdown
-	font = pygame.font.SysFont(None, 75)
-	text = font.render(str(counter), True, "blue")
-	win.blit(text, (615, 25))
-	pygame.display.flip()
+        # display vehicles
+        for vehicle in vehicles:    
+            camera_update = vehicle.move(world)
+            if camera_update:
+                camera_pos = (350 - camera_update[0], 350 - camera_update[1])
+                player.pos_update(camera_update)
+            vehicle.render(world)
 
-pygame.quit()
+        # powerups
+        for i in range(len(idStatus)):
+            pos = player.get_pos()
+            if (idStatus[i] == True):
+                world.blit(ID_img, idCoords[i])
+                if ((pos[0] - (idCoords[i][0] + 25)) ** 2 + (pos[1] - (idCoords[i][1] + 14)) ** 2) < 1200:
+                    idStatus[i] = False
+                    score += 20
+                    ids_collected += 1
+
+                    idCount += 1 
+                    # print(idCount)
+
+        # draw to destination
+        player_rel = (player.get_pos()[0], player.get_pos()[1])
+        pygame.draw.line(world, (89, 0, 35), player_rel, dest_pos, width=5)
+
+        # win condition
+        if ((player.get_pos()[0] - dest_pos[0]) ** 2 + (player.get_pos()[1] - dest_pos[1]) ** 2) ** (1/2) < 50:
+            # set new destination
+            dest_name, dest_pos = random.choice(list(destinations.items()))
+            score += 100
+            classes_attended += 1
+
+        # map
+        display.blit(world,camera_pos)
+
+        # debugging coordinates
+        font = pygame.font.SysFont(None, 40)
+        #text = font.render(str(350 - camera_pos[0]), True, "white")
+        #display.blit(text, (100, 50))
+        #text = font.render(str(350 - camera_pos[1]), True, "white")
+        #display.blit(text, (300, 50))
+
+        # destination
+        text = font.render(f"Next Class in: {dest_name}", True, "white")
+        display.blit(text, (50, 25))
+
+        # countdown
+        text = font.render(str(counter), True, "white")
+        display.blit(text, (615, 25))
+
+        pygame.display.flip()
+
+if __name__ in "__main__":
+    display = pygame.display.set_mode((700, 700))
+
+    pygame.display.set_caption("HowdyHack 2022 - Grand Theft Aggie")
+    clock = pygame.time.Clock()
+    
+    game(display,clock)
